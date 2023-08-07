@@ -14,21 +14,34 @@ def criar_mensagem():
         messagebox.showinfo("Mensagem Criada", "Mensagem criada com sucesso!")
 
 # Função para exibir todas as mensagens salvas
-def ver_mensagens():
+def exibir_mensagens(mensagens):
     mensagem_texto = ""
     for i, (data, mensagem) in enumerate(mensagens):
         mensagem_texto += f"{i}: {data} - {mensagem}\n\n"
+    return mensagem_texto
 
-    # Criar uma nova janela para exibir mensagens
+# Função para exibir janela com mensagens
+def exibir_janela_mensagens(titulo, mensagem_texto):
     janela_mensagens = tk.Toplevel(root)
-    janela_mensagens.title("Mensagens Carregadas")
+    janela_mensagens.title(titulo)
     janela_mensagens.iconbitmap("C:\\sharing_share_icon_255901.ico")
+    janela_mensagens.geometry("1920x1080")  # Definir tamanho da janela
 
     # Área rolável para exibir mensagens
-    text_box = scrolledtext.ScrolledText(janela_mensagens, wrap=tk.WORD, width=60, height=20)
+    text_box = scrolledtext.ScrolledText(janela_mensagens, wrap=tk.WORD, width=150, height=40)  # Ajustar largura e altura
     text_box.insert(tk.INSERT, mensagem_texto)
     text_box.configure(state="disabled")
     text_box.pack()
+
+# Função para exibir todas as mensagens salvas
+def ver_mensagens():
+    mensagem_texto = exibir_mensagens(mensagens)
+    exibir_janela_mensagens("Mensagens Carregadas", mensagem_texto)
+
+# Função para exibir mensagens carregadas
+def ver_mensagens_carregadas():
+    mensagem_texto = exibir_mensagens(mensagens)
+    exibir_janela_mensagens("Mensagens Carregadas", mensagem_texto)
 
 # Função para salvar as mensagens em um arquivo de texto
 def salvar_mensagens():
@@ -37,32 +50,20 @@ def salvar_mensagens():
         with open(file_path, "w") as file:
             for data, mensagem in mensagens:
                 file.write(f"{data} - {mensagem}\n")
+        messagebox.showinfo("Mensagens Salvas", "Mensagens foram salvas com sucesso!")
 
 # Função para carregar mensagens de um arquivo de texto
 def carregar_mensagens():
     file_path = filedialog.askopenfilename(filetypes=[("Arquivos de Texto", "*.txt")])
     if file_path:
         mensagens.clear()
-        with open(file_path, "r") as file:
-            for line in file:
-                parts = line.strip().split(" - ", 1)
-                if len(parts) == 2:
-                    mensagens.append((parts[0], parts[1]))
-
-# Função para exibir as mensagens carregadas em uma janela rolável
-def ver_mensagens_carregadas():
-    mensagem_texto = ""
-    for i, (data, mensagem) in enumerate(mensagens):
-        mensagem_texto += f"{i}: {data} - {mensagem}\n\n"
-
-    janela_mensagens_carregadas = tk.Toplevel(root)
-    janela_mensagens_carregadas.title("Mensagens Carregadas")
-    janela_mensagens_carregadas.iconbitmap("C:\\sharing_share_icon_255901.ico")
-
-    text_box = scrolledtext.ScrolledText(janela_mensagens_carregadas, wrap=tk.WORD, width=60, height=20)
-    text_box.insert(tk.INSERT, mensagem_texto)
-    text_box.configure(state="disabled")
-    text_box.pack()
+        try:
+            with open(file_path, "r") as file:
+                content = file.read()
+                exibir_janela_mensagens("Mensagens Carregadas", content)
+            messagebox.showinfo("Mensagens Carregadas", "Mensagens foram carregadas com sucesso!")
+        except Exception as e:
+            messagebox.showerror("Erro ao Carregar Mensagens", f"Ocorreu um erro ao carregar as mensagens: {str(e)}")
 
 # Configuração da interface
 root = tk.Tk()
