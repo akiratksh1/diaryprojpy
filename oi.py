@@ -1,9 +1,13 @@
 import tkinter as tk
 from tkinter import simpledialog, messagebox, scrolledtext, filedialog
 from datetime import datetime
+import os
 
 # Lista para armazenar as mensagens
 mensagens = []
+
+# Diretório padrão para salvar e carregar mensagens
+diretorio_mensagens = ""
 
 # Função para criar uma nova mensagem
 def criar_mensagem():
@@ -11,6 +15,7 @@ def criar_mensagem():
     if mensagem:
         data_hora = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         mensagens.append((data_hora, mensagem))
+        salvar_mensagens_arquivo()  # Salvar as mensagens no arquivo
         messagebox.showinfo("Mensagem Criada", "Mensagem criada com sucesso!")
 
 # Função para exibir todas as mensagens salvas
@@ -44,26 +49,46 @@ def ver_mensagens_carregadas():
     exibir_janela_mensagens("Mensagens Carregadas", mensagem_texto)
 
 # Função para salvar as mensagens em um arquivo de texto
-def salvar_mensagens():
-    file_path = filedialog.asksaveasfilename(defaultextension=".txt", filetypes=[("Arquivos de Texto", "*.txt")])
-    if file_path:
-        with open(file_path, "w") as file:
-            for data, mensagem in mensagens:
-                file.write(f"{data} - {mensagem}\n")
-        messagebox.showinfo("Mensagens Salvas", "Mensagens foram salvas com sucesso!")
+def salvar_mensagens_arquivo():
+    file_path = os.path.join(diretorio_mensagens, "mensagens.txt")
+    with open(file_path, "w") as file:
+        for data, mensagem in mensagens:
+            file.write(f"{data} - {mensagem}\n")
 
 # Função para carregar mensagens de um arquivo de texto
 def carregar_mensagens():
-    file_path = filedialog.askopenfilename(filetypes=[("Arquivos de Texto", "*.txt")])
+    file_path = filedialog.askopenfilename(initialdir=diretorio_mensagens, filetypes=[("Arquivos de Texto", "*.txt")])
     if file_path:
         mensagens.clear()
         try:
             with open(file_path, "r") as file:
                 content = file.read()
-                exibir_janela_mensagens("Mensagens Carregadas", content)
+                mensagens.append(content)
             messagebox.showinfo("Mensagens Carregadas", "Mensagens foram carregadas com sucesso!")
         except Exception as e:
             messagebox.showerror("Erro ao Carregar Mensagens", f"Ocorreu um erro ao carregar as mensagens: {str(e)}")
+
+# Função para selecionar o diretório de mensagens
+def selecionar_diretorio():
+    global diretorio_mensagens
+    diretorio_mensagens = filedialog.askdirectory(title="Selecione o Diretório de Mensagens")
+    carregar_arquivos_txt_diretorio(diretorio_mensagens)
+
+# Função para carregar arquivos .txt no diretório
+def carregar_arquivos_txt_diretorio(diretorio):
+    lista_arquivos.delete(0, tk.END)  # Limpar a lista de arquivos
+    for filename in os.listdir(diretorio):
+        if filename.endswith(".txt"):
+            lista_arquivos.insert(tk.END, filename)
+
+# Função para visualizar o conteúdo do arquivo selecionado
+def visualizar_conteudo_arquivo():
+    selected_file = lista_arquivos.get(tk.ACTIVE)
+    if selected_file:
+        file_path = os.path.join(diretorio_mensagens, selected_file)
+        with open(file_path, "r") as file:
+            content = file.read()
+            exibir_janela_mensagens(selected_file, content)
 
 # Configuração da interface
 root = tk.Tk()
@@ -84,14 +109,51 @@ root.geometry(f"{largura_janela}x{altura_janela}+{x_pos}+{y_pos}")
 # Botões
 botao1 = tk.Button(root, text="Criar Mensagem", command=criar_mensagem)
 botao2 = tk.Button(root, text="Ver Mensagens", command=ver_mensagens)
-botao3 = tk.Button(root, text="Salvar Mensagens", command=salvar_mensagens)
+botao3 = tk.Button(root, text="Salvar Mensagens", command=salvar_mensagens_arquivo)
 botao4 = tk.Button(root, text="Carregar Mensagens", command=carregar_mensagens)
 botao5 = tk.Button(root, text="Ver Mensagens Carregadas", command=ver_mensagens_carregadas)
+botao6 = tk.Button(root, text="Selecionar Diretório", command=selecionar_diretorio)
+botao7 = tk.Button(root, text="Visualizar Arquivo Selecionado", command=visualizar_conteudo_arquivo)
 botao1.pack(pady=10)
 botao2.pack(pady=10)
 botao3.pack(pady=10)
 botao4.pack(pady=10)
 botao5.pack(pady=10)
+botao6.pack(pady=10)
+botao7.pack(pady=10)
+
+# Criação da lista de arquivos
+lista_arquivos = tk.Listbox(root, selectmode=tk.SINGLE)
+lista_arquivos.pack(pady=10)
+
+# Função para carregar e exibir os arquivos da pasta selecionada
+def carregar_arquivos_pasta():
+    try:
+        global diretorio_mensagens
+        diretorio_mensagens = filedialog.askdirectory(title="Selecione a Pasta com Arquivos TXT")
+        arquivos_txt = [arquivo for arquivo in os.listdir(diretorio_mensagens) if arquivo.lower().endswith('.txt')]
+        lista_arquivos.delete(0, tk.END)
+        for arquivo in arquivos_txt:
+            lista_arquivos.insert(tk.END, arquivo)
+    except Exception as e:
+        messagebox.showerror("Erro ao Carregar Arquivos", f"Ocorreu um erro ao carregar os arquivos: {str(e)}")
+
+# Botão para carregar arquivos da pasta selecionada
+botao_carregar_arquivos = tk.Button(root, text="Carregar Arquivos da Pasta", command=carregar_arquivos_pasta)
+botao_carregar_arquivos.pack(pady=10)
+
+# Função para exibir o conteúdo do arquivo selecionado na lista
+def exibir_conteudo_arquivo_selecionado():
+    selected_file = lista_arquivos.get(tk.ACTIVE)
+    if selected_file:
+        file_path = os.path.join(diretorio_mensagens, selected_file)
+        with open(file_path, "r") as file:
+            content = file.read()
+            exibir_janela_mensagens(selected_file, content)
+
+# Botão para exibir conteúdo do arquivo selecionado
+botao8 = tk.Button(root, text="Exibir Conteúdo do Arquivo Selecionado", command=exibir_conteudo_arquivo_selecionado)
+botao8.pack(pady=10)
 
 # Loop principal da interface
 root.mainloop()
